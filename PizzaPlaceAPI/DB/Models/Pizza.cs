@@ -1,10 +1,13 @@
-﻿namespace PizzaPlaceAPI.DB.Models
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace PizzaPlaceAPI.DB.Models
 {
+    [PrimaryKey(nameof(pizza_id))]
     public class Pizza
     {
         public string pizza_id { get; set; }
-        public string pizza_type_id { get; set; }
+        public string recipe_id { get; set; }
         public string size { get; set; }
-        public float price { get; set; }
+        public double price { get; set; }
     }
 }
