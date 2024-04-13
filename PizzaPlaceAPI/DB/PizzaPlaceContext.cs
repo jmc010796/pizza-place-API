@@ -20,18 +20,18 @@ namespace PizzaPlaceAPI.DB
         }
         protected override void OnConfiguring(DbContextOptionsBuilder builder)
         {
-            string? conn_string = config.GetConnectionString("New");
+            string? conn_string = config.GetConnectionString("Default");
             builder.UseSqlServer(conn_string);
         }
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            builder.Entity<OrderStamp>();
-            builder.Entity<OrderDetail>();
-            builder.Entity<Pizza>();
-            builder.Entity<Recipe>();
-            builder.Entity<Category>();
-            builder.Entity<RecipeIngredient>();
-            builder.Entity<Ingredient>();
+            builder.Entity<OrderStamp>().ToTable("order_stamp");
+            builder.Entity<OrderDetail>().ToTable("order_detail");
+            builder.Entity<Pizza>().ToTable("pizza");
+            builder.Entity<Recipe>().ToTable("recipe");
+            builder.Entity<Category>().ToTable("category");
+            builder.Entity<RecipeIngredient>().ToTable("recipe_ingredient");
+            builder.Entity<Ingredient>().ToTable("ingredient");
         }
     }
 }
