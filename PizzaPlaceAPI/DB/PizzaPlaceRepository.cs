@@ -107,11 +107,11 @@ namespace PizzaPlaceAPI.DB
                         this.db.Recipe.Add(insert);
 
                         // Loop for Ingredient list
-                        var ingredientList = values[3].Split(',');
+                        var ingredientList = item.Split("\"")[1].Split(",");
                         foreach (var ing in ingredientList)
                         {
                             var rcp_ing = new RecipeIngredient();
-                            var cln_ing = ing.Replace("\"", "");
+                            var cln_ing = ing.Trim();
                             // Check if name is already in Dict
                             // Insert ingredient name if not
                             if (!ingDict.ContainsKey(cln_ing))
@@ -211,29 +211,32 @@ namespace PizzaPlaceAPI.DB
                 .Where(category => query.categId == null || category.category_id == query.categId);
             var qIngredient = this.db.Ingredient.AsQueryable();
             var qRecipeIngredient = this.db.RecipeIngredient.AsQueryable();
+            IQueryable<RecipeIngredient>? included = null;
+            IQueryable<RecipeIngredient>? excluded = null;
             if (query.contains != null && query.contains.Count > 0)
             {
                 var contains = query.contains.AsQueryable();
-                qIngredient = from ingredient in qIngredient
+                included = from ingredient in qIngredient
+                    join recIng in qRecipeIngredient on ingredient.ingredient_id equals recIng.ingredient_id
                     where contains.Any(ing => ing == ingredient.name)
-                    select ingredient;
+                    select recIng;
             }
             if (query.exclude != null && query.exclude.Count > 0)
             {
                 var exclude = query.exclude.AsQueryable();
-                qIngredient = from ingredient in qIngredient
-                    where !exclude.Any(ing => ing == ingredient.name)
-                    select ingredient;
+                excluded = from ingredient in qIngredient
+                    join recIng in qRecipeIngredient on ingredient.ingredient_id equals recIng.ingredient_id
+                    where exclude.Any(ing => ing == ingredient.name)
+                    select recIng;
             }
 
             // Join all Filtered Tables
             var result = from pizza in qPizza
                 join recipe in qRecipe on pizza.recipe_id equals recipe.recipe_id
                 join category in qCategory on recipe.category_id equals category.category_id
-                join recIng in qRecipeIngredient on recipe.recipe_id equals recIng.recipe_id
-                join ingredient in qIngredient on recIng.ingredient_id equals ingredient.ingredient_id
-
-                select new MenuItem
+                where (included == null || included.Any(recipe_id => recipe_id.recipe_id == recipe.recipe_id))
+                    && (excluded == null || !excluded.Any(recipe_id => recipe_id.recipe_id == recipe.recipe_id))
+                         select new MenuItem
                 {
                     name = recipe.name,
                     category = category.name,
