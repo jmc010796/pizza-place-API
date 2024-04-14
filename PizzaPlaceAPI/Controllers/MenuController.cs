@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PizzaPlaceAPI.Controllers.Model;
 using PizzaPlaceAPI.DB;
+using PizzaPlaceAPI.DB.Models;
 
 namespace PizzaPlaceAPI.Controllers
 {
@@ -71,6 +72,20 @@ namespace PizzaPlaceAPI.Controllers
             return Ok(resp);
         }
 
+        // PUT api/Menu/AddOrder
+        // Get Paginated list of Pizzas Matching Search condition
+        [HttpPut]
+        public IActionResult AddOrder([FromBody] List<OrderItem> items)
+        {
+            OrderResponse resp = new OrderResponse();
+            OrderStamp orderStamp = this.repository.InsertOrder();
+            resp.date = orderStamp.date;
+            resp.time = orderStamp.time;
+            resp.orders = this.repository.InsertOrderDetails(orderStamp.order_id, items);
+            resp.status = 200;
+            resp.message = "Add Order Ended OK";
+            return Ok(resp);
+        }
         private IQueryable<MenuItem> PaginateQuery(IQueryable<MenuItem> query, int page, int pageSize)
         {
             return query.Skip((page - 1) * pageSize).Take(pageSize);

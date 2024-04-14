@@ -14,13 +14,13 @@ namespace PizzaPlaceAPI.DB
             this.db = db;
         }
 
-        public void BulkInsert(string dataset_type, string file)
+        public void BulkInsert(string datasetType, string file)
         {
             // Convert text to list
             // Remove Header row
             List<string> rows = file.Split('\n').ToList();
             rows.RemoveAt(0);
-            switch (dataset_type)
+            switch (datasetType)
             {
                 case "orders":
                     // TRUNCATE to avoid ID conflicts
@@ -132,6 +132,31 @@ namespace PizzaPlaceAPI.DB
             }
             this.db.SaveChanges();
         }
+        public OrderStamp InsertOrder()
+        {
+            var order = new OrderStamp();
+            var timestamp = DateTime.UtcNow;
+            order.date = DateOnly.FromDateTime(timestamp);
+            order.time = TimeOnly.FromDateTime(timestamp);
+            this.db.OrderStamp.Add(order);
+            this.db.SaveChanges();
+            return order;
+        }
+        public List<OrderItem> InsertOrderDetails(int orderId, List<OrderItem> orderItem)
+        {
+            var orderDetails = new List<OrderDetail>();
+            foreach ( var item in orderItem)
+            {
+                var order = new OrderDetail();
+                order.order_id = orderId;
+                order.pizza_id = item.pizza_id;
+                order.quantity = item.quantity;
+                orderDetails.Add(order);
+            }
+            this.db.OrderDetail.AddRange(orderDetails);
+            this.db.SaveChanges(true);
+            return orderItem;
+        }
 
         public IQueryable<MenuItem> GetPizzaList()
         {
@@ -209,6 +234,7 @@ namespace PizzaPlaceAPI.DB
                 .Where(recipe => query.name == null || recipe.name.Contains(query.name));
             var qCategory = this.db.Category.AsQueryable()
                 .Where(category => query.categId == null || category.category_id == query.categId);
+            // Ingredients Filtering
             var qIngredient = this.db.Ingredient.AsQueryable();
             var qRecipeIngredient = this.db.RecipeIngredient.AsQueryable();
             IQueryable<RecipeIngredient>? included = null;
@@ -236,7 +262,7 @@ namespace PizzaPlaceAPI.DB
                 join category in qCategory on recipe.category_id equals category.category_id
                 where (included == null || included.Any(recipe_id => recipe_id.recipe_id == recipe.recipe_id))
                     && (excluded == null || !excluded.Any(recipe_id => recipe_id.recipe_id == recipe.recipe_id))
-                         select new MenuItem
+                select new MenuItem
                 {
                     name = recipe.name,
                     category = category.name,
