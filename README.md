@@ -47,3 +47,5 @@ The following are the currently implemented Endpoints usable upon running this s
 | | | pageSize = Number of Pizza per page |
 | | | query = JSON object containing search conditions, See Model file for reference |
 | PUT api/Menu/AddOrder | Takes in a list of pizza and quantity and adds it to an Order | items = List of Menu Item containing pizza ids and quantities |
+| GET api/Sales/GetAllSalesDetails/{page}?pageSize={pageSize} | Get's All Sales Transaction | page = Page number |
+| | | pageSize = Number of transaction per page |
