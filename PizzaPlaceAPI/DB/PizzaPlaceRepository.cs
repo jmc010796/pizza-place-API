@@ -134,8 +134,10 @@ namespace PizzaPlaceAPI.DB
         }
         public OrderStamp InsertOrder()
         {
+            var lastId = this.db.OrderStamp.OrderByDescending(order => order.order_id).First().order_id;
             var order = new OrderStamp();
             var timestamp = DateTime.UtcNow;
+            order.order_id = lastId + 1;
             order.date = DateOnly.FromDateTime(timestamp);
             order.time = TimeOnly.FromDateTime(timestamp);
             this.db.OrderStamp.Add(order);
@@ -144,10 +146,13 @@ namespace PizzaPlaceAPI.DB
         }
         public List<OrderItem> InsertOrderDetails(int orderId, List<OrderItem> orderItem)
         {
+            var lastId = this.db.OrderDetail.OrderByDescending(order => order.order_detail_id).First().order_detail_id;
             var orderDetails = new List<OrderDetail>();
             foreach ( var item in orderItem)
             {
                 var order = new OrderDetail();
+                lastId++;
+                order.order_detail_id = lastId;
                 order.order_id = orderId;
                 order.pizza_id = item.pizza_id;
                 order.quantity = item.quantity;
