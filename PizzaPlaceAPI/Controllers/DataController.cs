@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
 using PizzaPlaceAPI.DB;
 using PizzaPlaceAPI.Controllers.Model;
 
@@ -20,8 +18,7 @@ namespace PizzaPlaceAPI.Controllers
         }
 
         // POST api/Data/UploadDataSet
-        // type = Name of Pizza Place Dataset (orders, order_details, pizzas, pizza_types)
-        // file = CSV file to import
+        // Truncate Tables and Import new Dataset from CSV
         [HttpPost]
         public async Task<IActionResult> UploadDataSet([FromForm] string type, [FromForm] IFormFile file)
         {

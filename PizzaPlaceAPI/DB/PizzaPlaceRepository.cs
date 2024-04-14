@@ -1,5 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using PizzaPlaceAPI.Controllers.Model;
 using PizzaPlaceAPI.DB.Models;
+using System.Collections.Generic;
 
 namespace PizzaPlaceAPI.DB
 {
@@ -128,6 +131,117 @@ namespace PizzaPlaceAPI.DB
                     break;
             }
             this.db.SaveChanges();
+        }
+
+        public IQueryable<MenuItem> GetPizzaList()
+        {
+            return this.QueryMenuItem();
+        }
+        public IQueryable<MenuItem> GetPizzaListByCategory(int categId)
+        {
+            return this.QueryCategoryItem(categId);
+        }
+        public IQueryable<MenuItem> SearchPizza(SearchQuery query)
+        {
+            return this.QuerySearchItem(query);
+        }
+        public int GetPizzaCount()
+        {
+            return this.QueryMenuItem().Count();
+        }
+        public int GetPizzaCountByCategory(int categId)
+        {
+            return this.QueryCategoryItem(categId).Count();
+        }
+        public string? GetCategoryName(int categId)
+        {
+            var qCategory = this.db.Category.AsQueryable();
+            return (
+                from categ in qCategory
+                where categ.category_id == categId
+                select categ.name
+            ).FirstOrDefault();
+        }
+
+        // Reusable Query for getting Menu Items
+        private IQueryable<MenuItem> QueryMenuItem()
+        {
+            var qPizza = this.db.Pizza.AsQueryable();
+            var qRecipe = this.db.Recipe.AsQueryable();
+            var qCategory = this.db.Category.AsQueryable();
+
+            return from pizza in qPizza
+                join recipe in qRecipe on pizza.recipe_id equals recipe.recipe_id
+                join category in qCategory on recipe.category_id equals category.category_id
+                select new MenuItem
+                {
+                    name = recipe.name,
+                    category = category.name,
+                    size = pizza.size,
+                    price = pizza.price
+                };
+        }
+        // Reusable Query for getting Menu Items by Category
+        private IQueryable<MenuItem> QueryCategoryItem(int categId)
+        {
+            var qPizza = this.db.Pizza.AsQueryable();
+            var qRecipe = this.db.Recipe.AsQueryable();
+            var qCategory = this.db.Category.AsQueryable();
+
+            return from pizza in qPizza
+                join recipe in qRecipe on pizza.recipe_id equals recipe.recipe_id
+                join category in qCategory on recipe.category_id equals category.category_id
+                where category.category_id == categId
+                select new MenuItem
+                {
+                    name = recipe.name,
+                    category = category.name,
+                    size = pizza.size,
+                    price = pizza.price
+                };
+        }
+        private IQueryable<MenuItem> QuerySearchItem(SearchQuery query)
+        {
+            // Pre-Filter tables
+            var qPizza = this.db.Pizza.AsQueryable()
+                .Where(pizza => query.size == null || pizza.size == query.size);
+            var qRecipe = this.db.Recipe.AsQueryable()
+                .Where(recipe => query.name == null || recipe.name.Contains(query.name));
+            var qCategory = this.db.Category.AsQueryable()
+                .Where(category => query.categId == null || category.category_id == query.categId);
+            var qIngredient = this.db.Ingredient.AsQueryable();
+            var qRecipeIngredient = this.db.RecipeIngredient.AsQueryable();
+            if (query.contains != null && query.contains.Count > 0)
+            {
+                var contains = query.contains.AsQueryable();
+                qIngredient = from ingredient in qIngredient
+                    where contains.Any(ing => ing == ingredient.name)
+                    select ingredient;
+            }
+            if (query.exclude != null && query.exclude.Count > 0)
+            {
+                var exclude = query.exclude.AsQueryable();
+                qIngredient = from ingredient in qIngredient
+                    where !exclude.Any(ing => ing == ingredient.name)
+                    select ingredient;
+            }
+
+            // Join all Filtered Tables
+            var result = from pizza in qPizza
+                join recipe in qRecipe on pizza.recipe_id equals recipe.recipe_id
+                join category in qCategory on recipe.category_id equals category.category_id
+                join recIng in qRecipeIngredient on recipe.recipe_id equals recIng.recipe_id
+                join ingredient in qIngredient on recIng.ingredient_id equals ingredient.ingredient_id
+
+                select new MenuItem
+                {
+                    name = recipe.name,
+                    category = category.name,
+                    size = pizza.size,
+                    price = pizza.price
+                };
+
+            return result;
         }
     }
 }
