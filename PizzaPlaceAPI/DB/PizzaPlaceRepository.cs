@@ -193,6 +193,15 @@ namespace PizzaPlaceAPI.DB
             ).FirstOrDefault();
         }
 
+        public IQueryable<SalesItem> GetAllSales()
+        {
+            return this.QuerySalesItem();
+        }
+        public int GetSalesCount()
+        {
+            return this.QuerySalesItem().Count();
+        }
+
         // Reusable Query for getting Menu Items
         private IQueryable<MenuItem> QueryMenuItem()
         {
@@ -276,6 +285,27 @@ namespace PizzaPlaceAPI.DB
                 };
 
             return result;
+        }
+
+        // Reusable Query for getting Menu Items by Category
+        private IQueryable<SalesItem> QuerySalesItem()
+        {
+            var qOrderStamp = this.db.OrderStamp.AsQueryable();
+            var qOrderDetail = this.db.OrderDetail.AsQueryable();
+            var qPizza = this.db.Pizza.AsQueryable();
+
+            return from order in qOrderStamp
+                join orderDetail in qOrderDetail on order.order_id equals orderDetail.order_id
+                join pizza in qPizza on orderDetail.pizza_id equals pizza.pizza_id
+                select new SalesItem
+                {
+                    order_id = order.order_id,
+                    pizza_id = pizza.pizza_id,
+                    quantity = orderDetail.quantity,
+                    price = pizza.price,
+                    date = order.date,
+                    time = order.time
+                };
         }
     }
 }

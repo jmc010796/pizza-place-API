@@ -14,5 +14,7 @@ namespace PizzaPlaceAPI.DB
         public int GetPizzaCount();
         public int GetPizzaCountByCategory(int categId);
         public string? GetCategoryName(int categId);
+        public IQueryable<SalesItem> GetAllSales();
+        public int GetSalesCount();
     }
 }
